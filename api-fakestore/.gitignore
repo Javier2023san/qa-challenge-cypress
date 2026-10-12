@@ -1,0 +1,9 @@
+node_modules/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Credenciales locales: nunca se versionan. Se crean copiando
+# cypress.env.json.example, o se inyectan en CI/CD como variables
+# CYPRESS_apiUsername / CYPRESS_apiPassword.
+cypress.env.json
