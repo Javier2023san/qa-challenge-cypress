@@ -88,7 +88,7 @@ cypress/
     cart.cy.js          # Creación / actualización / eliminación de carrito
   support/
     commands.js         # Custom commands: cy.apiLogin(), cy.getProducts()
-    helpers.js          # Funciones planas: authHeaders(), pickRandomProducts(), toCartProduct()
+    helpers.js          # Funciones planas: requireEnv(), authHeaders(), pickRandomProducts(), toCartProduct()
     schemas.js          # Validación de estructura/tipos según la documentación (Product, Cart)
     e2e.js              # Carga de commands.js
 cypress.config.js

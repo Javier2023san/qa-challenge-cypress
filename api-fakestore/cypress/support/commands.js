@@ -9,7 +9,7 @@
  */
 
 import { assertProductSchema } from "./schemas";
-import { authHeaders } from "./helpers";
+import { authHeaders, requireEnv } from "./helpers";
 
 /**
  * Hace login contra POST /auth/login con las credenciales configuradas como
@@ -22,15 +22,8 @@ import { authHeaders } from "./helpers";
  * una API con autenticación por token (ver también cart.cy.js).
  */
 Cypress.Commands.add("apiLogin", (username, password) => {
-  const user = username ?? Cypress.env("apiUsername");
-  const pass = password ?? Cypress.env("apiPassword");
-
-  if (!user || !pass) {
-    throw new Error(
-      "Faltan las credenciales de la API. Definí apiUsername/apiPassword en cypress.env.json " +
-        "(ver cypress.env.json.example) o como CYPRESS_apiUsername / CYPRESS_apiPassword."
-    );
-  }
+  const user = username ?? requireEnv("apiUsername");
+  const pass = password ?? requireEnv("apiPassword");
 
   return cy
     .request({
@@ -40,8 +33,8 @@ Cypress.Commands.add("apiLogin", (username, password) => {
       log: false, // evita mostrar el password en el Command Log
     })
     .then((response) => {
-      // Fake Store API responde 201 Created en un login exitoso (verificado
-      // contra la API real), no 200: se valida explícitamente.
+      // La documentación indica 200, pero la API real responde 201 Created
+      // en un login exitoso: se valida el valor real (ver README).
       expect(response.status).to.eq(201);
       expect(response.body).to.have.property("token").that.is.a("string").and.not.empty;
       Cypress.env("authToken", response.body.token);

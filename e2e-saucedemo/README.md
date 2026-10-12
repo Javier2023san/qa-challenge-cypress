@@ -78,7 +78,7 @@ npm run cy:open
 ```
 cypress/
   e2e/
-    purchase-flow.cy.js        # El flujo completo, con sus 8 puntos de validación
+    purchase-flow.cy.js        # Flujo completo (8 puntos) + caso negativo de checkout
   pages/                       # Page Object Model
     components/
       CartItemList.js          # Lista de ítems compartida por carrito y resumen
@@ -116,8 +116,5 @@ cypress.env.json.example       # Plantilla de credenciales (cypress.env.json no 
 - **`cy.login()` como custom command de precondición**: el login no se evalúa en esta prueba,
   pero es precondición del flujo de compra. Se encapsula en un command reutilizable que se
   ejecuta en el `beforeEach`, con credenciales tomadas de variables de entorno.
-- **Reintentos solo en `cypress run`**: `retries` en `cypress.config.js` reintenta cada test
-  hasta 2 veces al correr por consola, para absorber fallas puntuales de red de un sitio
-  público; en modo interactivo (`cy:open`) no se reintenta, para ver los fallos reales.
 - **Datos en fixtures, lógica en helpers**: los datos del comprador están en un fixture; la
   conversión de precios (`"$29.99"` → `29.99`) está en `helpers.js` y se reutiliza.

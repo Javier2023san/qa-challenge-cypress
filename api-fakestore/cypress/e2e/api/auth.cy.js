@@ -1,3 +1,5 @@
+import { requireEnv } from "../../support/helpers";
+
 /**
  * 1. Login y manejo de token
  *
@@ -12,8 +14,9 @@ describe("API - Autenticación (/auth/login)", () => {
   it("permite iniciar sesión con credenciales válidas y devuelve un token reutilizable", () => {
     cy.apiLogin().then((response) => {
       // Validación de status + respuesta completa, como pide el enunciado.
-      // Fake Store API responde 201 Created (verificado contra la API real),
-      // no el 200 que uno podría suponer para un login.
+      // La documentación indica 200, pero la API real responde siempre
+      // 201 Created: se valida el valor real y la diferencia queda
+      // registrada en el README como observación sobre la documentación.
       expect(response.status).to.eq(201);
       expect(response.headers["content-type"]).to.include("application/json");
       expect(response.body).to.be.an("object");
@@ -28,14 +31,9 @@ describe("API - Autenticación (/auth/login)", () => {
   });
 
   it("[negativo] rechaza el login con una contraseña inválida", () => {
-    const invalidUser = Cypress.env("apiUsernameInvalid") ?? Cypress.env("apiUsername");
-    const invalidPass = Cypress.env("apiPasswordInvalid");
-
-    if (!invalidUser || !invalidPass) {
-      throw new Error(
-        "Faltan las variables apiUsernameInvalid/apiPasswordInvalid - ver cypress.env.json.example."
-      );
-    }
+    // Usuario válido + password incorrecta, ambos desde variables de entorno
+    const invalidUser = requireEnv("apiUsernameInvalid");
+    const invalidPass = requireEnv("apiPasswordInvalid");
 
     cy.request({
       method: "POST",
@@ -60,6 +58,7 @@ describe("API - Autenticación (/auth/login)", () => {
       failOnStatusCode: false,
     }).then((response) => {
       expect(response.status).to.eq(401);
+      expect(response.headers["content-type"]).to.include("text/html");
       expect(response.body).to.be.a("string");
       expect(response.body.toLowerCase()).to.include("incorrect");
     });

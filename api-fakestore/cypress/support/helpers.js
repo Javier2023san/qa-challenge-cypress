@@ -5,6 +5,22 @@
  */
 
 /**
+ * Devuelve el valor de una variable de entorno de Cypress. Si no está
+ * definida, corta la ejecución con un error claro (el test FALLA, nunca pasa
+ * en falso) indicando qué variable configurar.
+ */
+export function requireEnv(name) {
+  const value = Cypress.env(name);
+  if (!value) {
+    throw new Error(
+      `Falta la variable de entorno "${name}". Definila en cypress.env.json ` +
+        `(ver cypress.env.json.example) o como CYPRESS_${name}.`
+    );
+  }
+  return value;
+}
+
+/**
  * Devuelve el header Authorization armado con el token guardado por
  * cy.apiLogin(). Es a propósito una función PLANA y no un custom command:
  * solo lee un valor que ya está en memoria (Cypress.env), no hay nada que
