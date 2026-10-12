@@ -19,10 +19,9 @@ describe("Sauce Demo - Flujo de compra end-to-end", () => {
   const PRODUCTS_TO_BUY = 3;
 
   beforeEach(() => {
-    // El login está fuera del alcance: cy.login() solo deja la sesión iniciada
-    // (cacheada con cy.session) y cy.openInventory() abre el catálogo.
+    // Precondición: usuario logueado en el catálogo (el login está fuera del
+    // alcance de la prueba, ver support/commands.js)
     cy.login();
-    cy.openInventory();
 
     // Datos de checkout desde un fixture (no hardcodeados en el spec)
     cy.fixture("checkout-info.json").as("checkoutInfo");

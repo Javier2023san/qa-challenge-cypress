@@ -1,26 +1,27 @@
-import { authHeaders, pickRandomProducts } from "../../support/helpers";
+import { authHeaders, pickRandomProducts, toCartProduct } from "../../support/helpers";
 import { assertCartSchema } from "../../support/schemas";
 
 /**
  * 2, 3 y 4. Creación / Actualización / Eliminación de carrito
  *
+ * Los payloads respetan el schema `Cart` de la documentación oficial
+ * (https://fakestoreapi.com/docs): { userId, products: Product[] }, donde
+ * cada producto es el objeto Product completo. No se envían campos que no
+ * estén documentados.
+ *
  * Decisión: estos tres requerimientos describen UN flujo continuo ("utilizar
  * el carrito creado previamente"), por eso se implementan en un único
- * describe ordenado que comparte el `cartId` obtenido en la creación, en vez
+ * describe ordenado que comparte el carrito obtenido en la creación, en vez
  * de tres specs independientes que tendrían que crear su propio carrito.
- * Cypress no resetea el estado JS entre los `it()` de un mismo archivo, que
- * es justamente lo que este flujo necesita: cada `it` sigue siendo un
- * escenario con sus propias assertions, pero no se puede correr fuera de orden.
+ * Cada `it` es un escenario con sus propias assertions, pero dependen del
+ * orden: si la creación falla, la actualización y la eliminación también.
  */
 describe("API - Carrito de compras (/carts)", () => {
   const USER_ID = 1;
   const PRODUCTS_IN_CART = 3;
 
   let catalog = []; // catálogo real, pedido una sola vez y reutilizado
-  let cartProducts = []; // ítems del carrito: [{ productId, quantity }]
-  let cartId;
-
-  const today = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  let cart; // carrito creado (se actualiza en cada paso)
 
   before(() => {
     // Token obtenido una sola vez para todo el flujo y reutilizado en cada
@@ -35,13 +36,11 @@ describe("API - Carrito de compras (/carts)", () => {
   });
 
   it("crea un carrito nuevo con al menos 3 productos existentes", () => {
-    const selected = pickRandomProducts(catalog, PRODUCTS_IN_CART);
     const payload = {
       userId: USER_ID,
-      date: today(),
-      products: selected.map((p) => ({ productId: p.id, quantity: 1 })),
+      products: pickRandomProducts(catalog, PRODUCTS_IN_CART).map(toCartProduct),
     };
-    cy.log(`Productos elegidos: ${selected.map((p) => p.id).join(", ")}`);
+    cy.log(`Productos elegidos: ${payload.products.map((p) => p.id).join(", ")}`);
 
     cy.request({
       method: "POST",
@@ -49,95 +48,64 @@ describe("API - Carrito de compras (/carts)", () => {
       headers: authHeaders(),
       body: payload,
     }).then((response) => {
-      expect(response.status).to.eq(201); // 201 Created, verificado contra la API real
+      expect(response.status).to.eq(201);
       expect(response.headers["content-type"]).to.include("application/json");
 
       assertCartSchema(response.body);
       expect(response.body.userId).to.eq(USER_ID);
-      expect(response.body.products).to.have.length.of.at.least(PRODUCTS_IN_CART);
+      expect(response.body.products).to.have.length(PRODUCTS_IN_CART);
+      // La respuesta contiene exactamente los productos enviados
       expect(response.body.products).to.deep.equal(payload.products);
 
-      cartId = response.body.id;
-      cartProducts = response.body.products;
+      cart = response.body;
     });
   });
 
   it("actualiza el carrito creado agregando un producto adicional", () => {
-    expect(cartId, "cartId del test anterior").to.be.a("number");
+    expect(cart, "carrito creado en el test anterior").to.be.an("object");
 
     // Producto adicional tomado del mismo catálogo (sin volver a pedirlo),
     // distinto de los que ya están en el carrito.
-    const existingIds = cartProducts.map((p) => p.productId);
-    const [extraProduct] = pickRandomProducts(catalog, 1, existingIds);
-    const newItem = { productId: extraProduct.id, quantity: 1 };
-    const updatedProducts = [...cartProducts, newItem];
+    const existingIds = cart.products.map((p) => p.id);
+    const [extraProduct] = pickRandomProducts(catalog, 1, existingIds).map(toCartProduct);
+    const payload = { userId: USER_ID, products: [...cart.products, extraProduct] };
 
     cy.request({
       method: "PUT",
-      url: `/carts/${cartId}`,
+      url: `/carts/${cart.id}`,
       headers: authHeaders(),
-      body: { userId: USER_ID, date: today(), products: updatedProducts },
+      body: payload,
     }).then((response) => {
       expect(response.status).to.eq(200);
       expect(response.headers["content-type"]).to.include("application/json");
 
       assertCartSchema(response.body);
-      expect(response.body.id).to.eq(cartId);
-      expect(response.body.products).to.have.length(cartProducts.length + 1);
-      expect(response.body.products).to.deep.include(newItem);
+      expect(response.body.id).to.eq(cart.id);
+      expect(response.body.userId).to.eq(USER_ID);
+      expect(response.body.products).to.have.length(cart.products.length + 1);
+      expect(response.body.products).to.deep.include(extraProduct);
       // Los productos originales se mantienen
-      cartProducts.forEach((item) => expect(response.body.products).to.deep.include(item));
+      cart.products.forEach((product) => expect(response.body.products).to.deep.include(product));
 
-      cartProducts = response.body.products;
+      cart = response.body;
     });
   });
 
   it("elimina el carrito creado", () => {
-    expect(cartId, "cartId de los tests anteriores").to.be.a("number");
+    expect(cart, "carrito de los tests anteriores").to.be.an("object");
 
     cy.request({
       method: "DELETE",
-      url: `/carts/${cartId}`,
+      url: `/carts/${cart.id}`,
       headers: authHeaders(),
     }).then((response) => {
+      // La documentación define para DELETE /carts/{id} solo la respuesta
+      // 200 "Cart deleted successfully", sin body. Se valida exactamente el
+      // comportamiento real y constante de la API: 200, JSON y body null.
+      // Sin condicionales: si la respuesta cambia, el test falla.
       expect(response.status).to.eq(200);
-
-      // Fake Store API es un mock: los POST no persisten (verificado contra la
-      // API real), así que el DELETE de un id creado en ESTA corrida no tiene
-      // nada que devolver y responde `null`. La estructura completa de la
-      // respuesta del DELETE se valida en el test siguiente, con un carrito
-      // que sí existe. Si algún día la API persistiera, se valida igual.
-      if (response.body !== null) {
-        assertCartSchema(response.body);
-        expect(response.body.id).to.eq(cartId);
-      } else {
-        expect(response.body).to.be.null;
-      }
-    });
-  });
-
-  it("elimina un carrito pre-cargado y devuelve el carrito eliminado", () => {
-    // Complementa el test anterior: con un carrito que existe en la API
-    // (no creado por este flujo) se puede validar la estructura completa
-    // de la respuesta del DELETE. El id se obtiene dinámicamente de GET /carts.
-    cy.request({ method: "GET", url: "/carts", headers: authHeaders() }).then((listResponse) => {
-      expect(listResponse.status).to.eq(200);
-      expect(listResponse.body).to.be.an("array").and.not.be.empty;
-      const existingCart = listResponse.body[0];
-
-      cy.request({
-        method: "DELETE",
-        url: `/carts/${existingCart.id}`,
-        headers: authHeaders(),
-      }).then((response) => {
-        expect(response.status).to.eq(200);
-        expect(response.headers["content-type"]).to.include("application/json");
-
-        assertCartSchema(response.body);
-        expect(response.body.id).to.eq(existingCart.id);
-        expect(response.body.userId).to.eq(existingCart.userId);
-        expect(response.body.products).to.deep.equal(existingCart.products);
-      });
+      expect(response.headers["content-type"]).to.include("application/json");
+      expect(response.body).to.be.null;
     });
   });
 });

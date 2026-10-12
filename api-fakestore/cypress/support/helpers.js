@@ -23,7 +23,6 @@ export function authHeaders() {
  * Elige al azar `count` productos distintos del catálogo, excluyendo los ids
  * indicados. Así los tests usan productos obtenidos dinámicamente de la API y
  * no ids fijos: si el catálogo cambia, los tests siguen funcionando.
- * Sin dependencias externas (no hace falta lodash para esto).
  */
 export function pickRandomProducts(catalog, count, excludeIds = []) {
   const pool = catalog.filter((p) => !excludeIds.includes(p.id));
@@ -37,4 +36,17 @@ export function pickRandomProducts(catalog, count, excludeIds = []) {
     picked.push(pool.splice(idx, 1)[0]);
   }
   return picked;
+}
+
+/**
+ * Convierte un producto de GET /products al schema `Product` que define la
+ * documentación oficial (https://fakestoreapi.com/docs) para los ítems del
+ * carrito: id, title, price, description, category, image.
+ *
+ * Decisión: GET /products devuelve además `rating`, que NO forma parte del
+ * schema `Product` documentado, así que se descarta para que el payload
+ * enviado a /carts contenga solo campos documentados.
+ */
+export function toCartProduct({ id, title, price, description, category, image }) {
+  return { id, title, price, description, category, image };
 }

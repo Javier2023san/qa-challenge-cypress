@@ -10,13 +10,12 @@ oficial: https://fakestoreapi.com/docs), construida con [Cypress](https://www.cy
   inexistente).
 - **Carrito de compras** (`cypress/e2e/api/cart.cy.js`): creación con productos obtenidos
   dinámicamente desde `GET /products`, actualización agregando un producto adicional, y
-  eliminación del carrito. Los tres pasos comparten el mismo `cartId`, generado por el primer
-  test, tal como lo pide el enunciado ("utilizar el carrito creado previamente"). Se suma un
-  test de eliminación sobre un carrito pre-cargado de la API para validar la estructura completa
-  de la respuesta del `DELETE` (ver "Decisiones de diseño").
+  eliminación del carrito. Los tres pasos comparten el mismo carrito, generado por el primer
+  test, tal como lo pide el enunciado ("utilizar el carrito creado previamente").
 
 Todas las pruebas validan: código de estado HTTP, `content-type` de la respuesta, y la
-estructura/tipos de datos del body (ver `cypress/support/schemas.js`).
+estructura/tipos de datos del body según los schemas de la documentación oficial (ver
+`cypress/support/schemas.js`).
 
 ## Instalación
 
@@ -89,8 +88,8 @@ cypress/
     cart.cy.js          # Creación / actualización / eliminación de carrito
   support/
     commands.js         # Custom commands: cy.apiLogin(), cy.getProducts()
-    helpers.js          # Funciones planas: authHeaders(), pickRandomProducts()
-    schemas.js          # Validación de estructura/tipos (product, cart)
+    helpers.js          # Funciones planas: authHeaders(), pickRandomProducts(), toCartProduct()
+    schemas.js          # Validación de estructura/tipos según la documentación (Product, Cart)
     e2e.js              # Carga de commands.js
 cypress.config.js
 cypress.env.json.example  # Plantilla de credenciales (cypress.env.json no se versiona)
@@ -110,22 +109,30 @@ cypress.env.json.example  # Plantilla de credenciales (cypress.env.json no se ve
   `schemas.js` con assertions explícitas de tipo por campo, evitando una dependencia extra.
 - **Por qué `cart.cy.js` encadena create → update → delete en un mismo describe**: el enunciado
   pide reutilizar el carrito creado; en vez de tres specs independientes que tendrían que crear
-  su propio carrito cada uno, se comparte el `cartId` a través de una variable del `describe`.
+  su propio carrito cada uno, se comparte el carrito a través de una variable del `describe`.
 - **Catálogo pedido una sola vez**: `cy.getProducts()` se ejecuta en el `before()` y el
   resultado se reutiliza tanto para crear el carrito como para elegir el producto adicional de
   la actualización, evitando requests repetidos.
 - **Productos dinámicos**: `pickRandomProducts()` elige ids reales del catálogo al azar (y puede
   excluir los ya usados), para no depender de ids fijos. Los ids elegidos se loguean con
   `cy.log()` para poder reproducir un fallo.
+- **Payloads según la documentación oficial (no el GitHub del proyecto)**: los requests a
+  `/carts` envían el schema `Cart` documentado en https://fakestoreapi.com/docs —
+  `{ userId, products: Product[] }`, con cada producto completo (`id`, `title`, `price`,
+  `description`, `category`, `image`). No se envían campos no documentados (como `date` o
+  `productId`/`quantity`). `GET /products` devuelve además `rating`, que no forma parte del
+  schema `Product` documentado, por eso `toCartProduct()` lo descarta antes de armar el payload.
 - **Por qué el login negativo verifica texto plano y no JSON**: Fake Store API responde `401`
   con `content-type: text/html` en credenciales inválidas, a diferencia del login exitoso que sí
   devuelve JSON. El test refleja ese comportamiento real.
-- **Códigos de estado verificados contra la API real, no asumidos**: `POST /auth/login` y
-  `POST /carts` responden `201 Created` (no `200`); `GET`, `PUT` y `DELETE` responden `200`.
-- **`DELETE` del carrito creado devuelve `null`**: Fake Store API es un mock — los `POST` no
-  persisten datos nuevos. Al borrar el carrito creado en la misma corrida, la API responde `200`
-  con body `null`. Por eso se agregó un segundo test que borra un carrito pre-cargado (id
-  obtenido dinámicamente de `GET /carts`), donde la API sí devuelve el carrito eliminado y se
-  puede validar su estructura completa.
+- **`POST /auth/login` devuelve `201`, no el `200` documentado**: la documentación indica
+  `200 Login successful`, pero la API real responde `201 Created`. El test valida el valor real
+  (`201`) y la diferencia queda registrada acá como observación sobre la documentación.
+  `POST /carts` responde `201` y `PUT`/`DELETE` responden `200`, en línea con la documentación.
+- **`DELETE /carts/{id}` sin condicionales**: la documentación solo define la respuesta
+  `200 "Cart deleted successfully"`, sin body. Como Fake Store API no persiste los carritos
+  creados, la API responde de forma constante `200` con body `null`. El test valida exactamente
+  eso (status, `content-type` y `body === null`), sin ramas condicionales: cualquier cambio en
+  la respuesta hace fallar el test.
 - **Credenciales fuera del repositorio**: `cypress.env.json` está en `.gitignore`; solo se
   versiona la plantilla `cypress.env.json.example`.
