@@ -60,17 +60,10 @@ CYPRESS_standardUser=standard_user CYPRESS_standardPassword=<password> npm test
 Los datos de checkout (nombre, apellido, código postal) están en
 `cypress/fixtures/checkout-info.json`.
 
-### CI
-
-`.github/workflows/e2e-saucedemo.yml` (en la raíz del repo) corre esta suite cuando cambia
-algo dentro de `e2e-saucedemo/`. Requiere el secret de
-repositorio `SAUCE_STANDARD_PASSWORD` (el password de demo). Con `cypress run` se reintenta
-cada test hasta 2 veces (`retries` en `cypress.config.js`) y, si falla, se suben los screenshots.
-
 ## Ejecución de tests
 
 ```bash
-# Modo headless (Electron), como en CI
+# Modo headless (Electron)
 npm test
 
 # Headless en Chrome
@@ -123,5 +116,8 @@ cypress.env.json.example       # Plantilla de credenciales (cypress.env.json no 
 - **`cy.login()` como custom command de precondición**: el login no se evalúa en esta prueba,
   pero es precondición del flujo de compra. Se encapsula en un command reutilizable que se
   ejecuta en el `beforeEach`, con credenciales tomadas de variables de entorno.
+- **Reintentos solo en `cypress run`**: `retries` en `cypress.config.js` reintenta cada test
+  hasta 2 veces al correr por consola, para absorber fallas puntuales de red de un sitio
+  público; en modo interactivo (`cy:open`) no se reintenta, para ver los fallos reales.
 - **Datos en fixtures, lógica en helpers**: los datos del comprador están en un fixture; la
   conversión de precios (`"$29.99"` → `29.99`) está en `helpers.js` y se reutiliza.

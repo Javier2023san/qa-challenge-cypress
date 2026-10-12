@@ -1,7 +1,7 @@
 const { defineConfig } = require("cypress");
 
 module.exports = defineConfig({
-  // Reintentos solo en `cypress run` (CI); en modo interactivo no se reintenta
+  // Reintentos solo en `cypress run`; en modo interactivo no se reintenta
   retries: { runMode: 2, openMode: 0 },
   e2e: {
     baseUrl: "https://www.saucedemo.com",
