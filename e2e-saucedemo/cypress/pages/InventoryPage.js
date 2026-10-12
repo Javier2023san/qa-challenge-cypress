@@ -1,3 +1,5 @@
+import { escapeRegExp } from "../support/helpers";
+
 /**
  * Page Object de /inventory.html (catálogo).
  *
@@ -35,7 +37,8 @@ class InventoryPage {
    * producto y es fácil que quede desactualizado.
    */
   addProductToCartByName(name) {
-    cy.contains("[data-test='inventory-item-name']", name)
+    // Match exacto (no por subcadena) para no confundir nombres parecidos
+    cy.contains("[data-test='inventory-item-name']", new RegExp(`^${escapeRegExp(name)}$`))
       .parents("[data-test='inventory-item']")
       .find("[data-test^='add-to-cart']")
       .click();

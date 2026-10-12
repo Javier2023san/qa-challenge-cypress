@@ -14,6 +14,11 @@ export function parsePrice(text) {
   return Number(match[1].replace(/,/g, ""));
 }
 
+/** Escapa los caracteres especiales de regex de un texto literal. */
+export function escapeRegExp(text) {
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /** Suma una lista de precios en formato texto ("$29.99"). */
 export function sumPrices(prices) {
   return prices.reduce((sum, price) => sum + parsePrice(price), 0);

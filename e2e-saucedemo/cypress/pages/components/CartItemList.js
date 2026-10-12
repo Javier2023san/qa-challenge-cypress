@@ -12,20 +12,8 @@ export default class CartItemList {
     return cy.get("[data-test='inventory-item']");
   }
 
-  itemNames() {
-    return cy.get("[data-test='inventory-item'] [data-test='inventory-item-name']");
-  }
-
-  itemPrices() {
-    return cy.get("[data-test='inventory-item'] [data-test='inventory-item-price']");
-  }
-
   itemDescriptions() {
     return cy.get("[data-test='inventory-item'] [data-test='inventory-item-desc']");
-  }
-
-  itemQuantities() {
-    return cy.get("[data-test='inventory-item'] [data-test='item-quantity']");
   }
 
   /**

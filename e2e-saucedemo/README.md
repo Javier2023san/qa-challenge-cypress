@@ -5,9 +5,8 @@ compra en [Sauce Demo](https://www.saucedemo.com/), usando el usuario `standard_
 
 ## Alcance
 
-El login está fuera del alcance de la prueba, pero es su precondición: se resuelve en el
-`beforeEach` con `cy.login()`, que deja al usuario logueado en el catálogo. El test
-(`cypress/e2e/purchase-flow.cy.js`) cubre:
+El login queda fuera del alcance de la prueba: se usa solo como estado inicial, vía
+`cy.login()` (cacheado con `cy.session()`). El test (`cypress/e2e/purchase-flow.cy.js`) cubre:
 
 1. Selección de 3 productos del catálogo (leídos dinámicamente, no hardcodeados por nombre).
 2. Agregado al carrito (validando el contador del ícono del carrito).
@@ -19,6 +18,9 @@ El login está fuera del alcance de la prueba, pero es su precondición: se resu
 7. Validación del resumen (mismos productos; subtotal = suma de precios; total = subtotal +
    impuesto) y finalización de la compra.
 8. Validación del mensaje final de confirmación y de que el carrito quedó vacío.
+
+Además hay un caso negativo: el checkout con los datos del comprador vacíos muestra el error
+`First Name is required` y no avanza al resumen.
 
 ## Instalación
 
@@ -41,7 +43,8 @@ variables de entorno de Cypress.
 ### Opción 1 — archivo local `cypress.env.json`
 
 ```bash
-cp cypress.env.json.example cypress.env.json
+cp cypress.env.json.example cypress.env.json     # macOS / Linux / Git Bash
+copy cypress.env.json.example cypress.env.json   # Windows (cmd / PowerShell)
 ```
 
 Completar `standardPassword` con el password de demo que muestra la propia página de login de
@@ -56,14 +59,18 @@ CYPRESS_standardUser=standard_user CYPRESS_standardPassword=<password> npm test
 Los datos de checkout (nombre, apellido, código postal) están en
 `cypress/fixtures/checkout-info.json`.
 
+### CI
+
+`.github/workflows/e2e-saucedemo.yml` (en la raíz del repo) corre esta suite cuando cambia
+algo dentro de `e2e-saucedemo/`. Requiere el secret de
+repositorio `SAUCE_STANDARD_PASSWORD` (el password de demo). Con `cypress run` se reintenta
+cada test hasta 2 veces (`retries` en `cypress.config.js`) y, si falla, se suben los screenshots.
+
 ## Ejecución de tests
 
 ```bash
 # Modo headless (Electron), como en CI
 npm test
-
-# Headless explícito
-npm run test:headless
 
 # Headless en Chrome
 npm run test:chrome
@@ -87,8 +94,8 @@ cypress/
     CheckoutStepTwoPage.js     # extends CartItemList
     CheckoutCompletePage.js
   support/
-    commands.js                # cy.login(): precondición de usuario logueado
-    helpers.js                 # parsePrice(), sumPrices()
+    commands.js                # cy.login() (con cy.session) y cy.openInventory()
+    helpers.js                 # parsePrice(), sumPrices(), escapeRegExp()
     e2e.js
   fixtures/
     checkout-info.json
@@ -112,8 +119,13 @@ cypress.env.json.example       # Plantilla de credenciales (cypress.env.json no 
   sola assertion `deep.equal` sobre `[{ name, price, quantity }]`.
 - **Assertions con datos calculados, no solo "existe"**: el subtotal se compara contra la suma
   de los precios seleccionados, y el total contra subtotal + impuesto.
-- **`cy.login()` como custom command de precondición**: el login no se evalúa en esta prueba,
-  pero es precondición del flujo de compra. Se encapsula en un command reutilizable que se
-  ejecuta en el `beforeEach`, con credenciales tomadas de variables de entorno.
+- **`cy.login()` como command con `cy.session()`**: es infraestructura de setup para llegar al
+  estado "ya logueado" que pide el enunciado. `cy.session()` cachea cookies y localStorage, así
+  que el login por UI se ejecuta una sola vez aunque la suite crezca.
+- **Visita directa a `/inventory.html` con `failOnStatusCode: false`**: Sauce Demo está
+  publicado como SPA en GitHub Pages; el servidor responde `404` en `/inventory.html` y esa
+  página redirige a la app, que resuelve la ruta del lado del cliente. Por eso
+  `cy.openInventory()` desactiva el chequeo de status y valida que la URL y el catálogo
+  efectivamente carguen.
 - **Datos en fixtures, lógica en helpers**: los datos del comprador están en un fixture; la
   conversión de precios (`"$29.99"` → `29.99`) está en `helpers.js` y se reutiliza.

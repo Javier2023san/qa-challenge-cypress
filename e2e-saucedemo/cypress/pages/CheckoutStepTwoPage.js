@@ -6,18 +6,6 @@ import { parsePrice } from "../support/helpers";
  * de la lista de productos se heredan de CartItemList.
  */
 class CheckoutStepTwoPage extends CartItemList {
-  subtotal() {
-    return cy.get("[data-test='subtotal-label']");
-  }
-
-  tax() {
-    return cy.get("[data-test='tax-label']");
-  }
-
-  total() {
-    return cy.get("[data-test='total-label']");
-  }
-
   /**
    * Devuelve (como chainable) los montos del resumen ya convertidos a número:
    * { subtotal, tax, total }.

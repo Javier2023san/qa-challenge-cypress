@@ -9,6 +9,10 @@ class CheckoutStepOnePage {
     return this;
   }
 
+  errorMessage() {
+    return cy.get("[data-test='error']");
+  }
+
   continueToOverview() {
     cy.get("[data-test='continue']").click();
     return this;

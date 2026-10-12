@@ -6,7 +6,6 @@
   "scripts": {
     "cy:open": "cypress open",
     "test": "cypress run",
-    "test:headless": "cypress run --browser electron --headless",
     "test:chrome": "cypress run --browser chrome"
   },
   "devDependencies": {
