@@ -51,16 +51,20 @@ describe("API - Autenticación (/auth/login)", () => {
   });
 
   it("[negativo] rechaza el login con un usuario inexistente", () => {
-    cy.request({
-      method: "POST",
-      url: "/auth/login",
-      body: { username: "usuario_que_no_existe_xyz", password: "cualquier-cosa" },
-      failOnStatusCode: false,
-    }).then((response) => {
-      expect(response.status).to.eq(401);
-      expect(response.headers["content-type"]).to.include("text/html");
-      expect(response.body).to.be.a("string");
-      expect(response.body.toLowerCase()).to.include("incorrect");
+    // El usuario inexistente viene de un fixture: ningún usuario ni password
+    // queda escrito dentro del test.
+    cy.fixture("unknown-user").then((credentials) => {
+      cy.request({
+        method: "POST",
+        url: "/auth/login",
+        body: credentials,
+        failOnStatusCode: false,
+      }).then((response) => {
+        expect(response.status).to.eq(401);
+        expect(response.headers["content-type"]).to.include("text/html");
+        expect(response.body).to.be.a("string");
+        expect(response.body.toLowerCase()).to.include("incorrect");
+      });
     });
   });
 });

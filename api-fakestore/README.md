@@ -42,7 +42,8 @@ ejecución desde variables de entorno de Cypress:
 Copiar el archivo de ejemplo y completar los valores:
 
 ```bash
-cp cypress.env.json.example cypress.env.json
+cp cypress.env.json.example cypress.env.json     # macOS / Linux / Git Bash
+copy cypress.env.json.example cypress.env.json   # Windows (cmd / PowerShell)
 ```
 
 Las credenciales de prueba son las publicadas en la documentación de Fake Store API
@@ -91,6 +92,8 @@ cypress/
     helpers.js          # Funciones planas: requireEnv(), authHeaders(), pickRandomProducts(), toCartProduct()
     schemas.js          # Validación de estructura/tipos según la documentación (Product, Cart)
     e2e.js              # Carga de commands.js
+  fixtures/
+    unknown-user.json   # Usuario inexistente para el login negativo (sin credenciales reales)
 cypress.config.js
 cypress.env.json.example  # Plantilla de credenciales (cypress.env.json no se versiona)
 ```
@@ -134,5 +137,8 @@ cypress.env.json.example  # Plantilla de credenciales (cypress.env.json no se ve
   creados, la API responde de forma constante `200` con body `null`. El test valida exactamente
   eso (status, `content-type` y `body === null`), sin ramas condicionales: cualquier cambio en
   la respuesta hace fallar el test.
+- **Ningún usuario ni password dentro de los tests**: las credenciales válidas y la password
+  incorrecta salen de variables de entorno, y el usuario inexistente del login negativo sale del
+  fixture `unknown-user.json`.
 - **Credenciales fuera del repositorio**: `cypress.env.json` está en `.gitignore`; solo se
   versiona la plantilla `cypress.env.json.example`.
