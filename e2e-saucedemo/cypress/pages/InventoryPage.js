@@ -1,6 +1,7 @@
 import { escapeRegExp } from "../support/helpers";
 
 /**
+ * el catálogo (elegir productos, ir al carrito).
  * Page Object de /inventory.html (catálogo).
  *
  * Todos los selectores usan atributos `[data-test="..."]`, que Sauce Demo

@@ -7,3 +7,7 @@ cypress/downloads/
 # cypress.env.json.example, o se inyectan en CI/CD como variables
 # CYPRESS_apiUsername / CYPRESS_apiPassword.
 cypress.env.json
+
+#Cosas que no se van a subir a github
+
+

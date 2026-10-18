@@ -4,6 +4,12 @@
  * puedan importarlos sin volver a registrar los custom commands.
  */
 
+
+/**
+ * (funciones chicas, como armar el encabezado con el token o elegir productos al azar.)
+ */
+
+
 /**
  * Devuelve el valor de una variable de entorno de Cypress. Si no está
  * definida, corta la ejecución con un error claro (el test FALLA, nunca pasa

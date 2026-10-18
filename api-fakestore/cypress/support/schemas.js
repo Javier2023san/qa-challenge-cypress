@@ -1,4 +1,5 @@
 /**
+ * las verificaciones de que los datos tengan la forma y los tipos correctos.
  * Validaciones de estructura y tipos de datos, según los schemas de la
  * documentación oficial (https://fakestoreapi.com/docs):
  *

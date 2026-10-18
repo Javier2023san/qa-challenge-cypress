@@ -1,4 +1,5 @@
 /**
+ * *acciones reutilizables, como hacer el login o traer los productos. /
  * Custom commands de la suite de Fake Store API.
  *
  * Decisión: en vez de repetir en cada spec el mismo boilerplate de
@@ -6,7 +7,7 @@
  * - un token de autenticación y el catálogo real de productos - se encapsula
  * acá. Así los specs quedan enfocados en el escenario y sus assertions.
  * Las funciones planas (authHeaders, pickRandomProducts) están en helpers.js.
- */
+  */
 
 import { assertProductSchema } from "./schemas";
 import { authHeaders, requireEnv } from "./helpers";

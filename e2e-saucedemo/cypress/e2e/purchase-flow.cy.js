@@ -15,10 +15,10 @@ import { sumPrices } from "../support/helpers";
  * strings literales: el test sigue funcionando aunque cambien el catálogo,
  * los precios o el orden.
  */
-describe("Sauce Demo - Flujo de compra end-to-end", () => {
-  const PRODUCTS_TO_BUY = 3;
+describe("Sauce Demo - Flujo de compra end-to-end", () => { //agrupa los tests con un nombre
+  const PRODUCTS_TO_BUY = 3; // Compra de productos
 
-  beforeEach(() => {
+  beforeEach(() => { // se ejecuta antes de cada test
     // Precondición: usuario logueado en el catálogo (el login está fuera del
     // alcance de la prueba, ver support/commands.js)
     cy.login();
@@ -27,7 +27,7 @@ describe("Sauce Demo - Flujo de compra end-to-end", () => {
     cy.fixture("checkout-info.json").as("checkoutInfo");
 
     // Productos seleccionados dinámicamente desde el catálogo
-    InventoryPage.getFirstProducts(PRODUCTS_TO_BUY).as("selectedProducts");
+    InventoryPage.getFirstProducts(PRODUCTS_TO_BUY).as("selectedProducts"); //Lee del catálogo el nombre y el precio de los primeros 3 productos
   });
 
   it("permite seleccionar productos, comprarlos y ver la confirmación final", function () {
